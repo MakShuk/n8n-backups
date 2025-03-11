@@ -105,7 +105,7 @@ else
 [webdav]
 type = webdav
 url = ${WEBDAV_URL}
-vendor = other
+vendor = othe
 user = ${WEBDAV_USERNAME}
 pass = $(echo -n ${WEBDAV_PASSWORD})
 EOF
