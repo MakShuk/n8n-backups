@@ -15,4 +15,5 @@ services:
       - WEBDAV_USERNAME=${WEBDAV_USERNAME}
       - WEBDAV_PASSWORD=${WEBDAV_PASSWORD}
       - BACKUP_KEEP_DAYS=${BACKUP_KEEP_DAYS}
+      - ARCHIVE_PASSWORD=${ARCHIVE_PASSWORD}
     command: sh -c "apk add --no-cache curl rclone bash && cp /scripts/backup.sh /tmp/ && cp /scripts/setup.sh /tmp/ && tr -d '\\r' < /tmp/backup.sh > /tmp/backup_clean.sh && mv /tmp/backup_clean.sh /tmp/backup.sh && tr -d '\\r' < /tmp/setup.sh > /tmp/setup_clean.sh && mv /tmp/setup_clean.sh /tmp/setup.sh && chmod +x /tmp/backup.sh /tmp/setup.sh && echo 'Listing /tmp:' && ls -la /tmp && /tmp/setup.sh && echo 'Running initial backup...' && /tmp/backup.sh && echo 'Initial backup completed at' `date` && while true; do current_hour=`date +%H`; if [ \"$current_hour\" == \"02\" ]; then /tmp/backup.sh && echo 'Backup completed at' `date` && sleep 3600; else sleep 1800; fi; done"

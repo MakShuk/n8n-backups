@@ -30,15 +30,40 @@ if [ $? -ne 0 ]; then
 fi
 echo "✅ Архив создан: n8n-backup-${BACKUP_DATE}.tar.gz"
 
+# Задание переменной архива
+ARCHIVE_FILE="${BACKUP_PATH}/n8n-backup-${BACKUP_DATE}.tar.gz"
+
+# Если установлен пароль для архива, зашифруем архив
+if [ -n "$ARCHIVE_PASSWORD" ]; then
+    # Проверка на наличие openssl
+    if ! command -v openssl >/dev/null 2>&1; then
+         echo "openssl не найден. Пытаемся установить его..."
+         apk update && apk add --no-cache openssl
+         if ! command -v openssl >/dev/null 2>&1; then
+             echo "❌ Не удалось установить openssl."
+             exit 1
+         fi
+    fi
+    echo "Обнаружен ARCHIVE_PASSWORD, шифрование архива..."
+    openssl enc -aes-256-cbc -salt -pbkdf2 -in "$ARCHIVE_FILE" -out "${ARCHIVE_FILE}.enc" -pass pass:"$ARCHIVE_PASSWORD"
+    if [ $? -ne 0 ]; then
+         echo "❌ Ошибка при шифровании архива."
+         exit 1
+    fi
+    rm "$ARCHIVE_FILE"
+    ARCHIVE_FILE="${ARCHIVE_FILE}.enc"
+    echo "✅ Архив зашифрован паролем."
+fi
+
 # Копирование архива на WebDAV
 echo "Копирование архива в облачное хранилище..."
-echo "Используем команду: rclone copy ${BACKUP_PATH}/n8n-backup-${BACKUP_DATE}.tar.gz ${REMOTE_PATH}/ --verbose"
-rclone copy ${BACKUP_PATH}/n8n-backup-${BACKUP_DATE}.tar.gz ${REMOTE_PATH}/ --verbose
+echo "Используем команду: rclone copy ${ARCHIVE_FILE} ${REMOTE_PATH}/ --verbose"
+rclone copy ${ARCHIVE_FILE} ${REMOTE_PATH}/ --verbose
 
 if [ $? -ne 0 ]; then
     echo "❌ Ошибка при копировании архива в облачное хранилище."
     echo "Повторная попытка с явным указанием конфигурации..."
-    rclone copy --config=/root/.config/rclone/rclone.conf ${BACKUP_PATH}/n8n-backup-${BACKUP_DATE}.tar.gz ${REMOTE_PATH}/ --verbose
+    rclone copy --config=/root/.config/rclone/rclone.conf ${ARCHIVE_FILE} ${REMOTE_PATH}/ --verbose
     
     if [ $? -ne 0 ]; then
         echo "❌ Повторная попытка также завершилась неудачей."
@@ -49,12 +74,12 @@ echo "✅ Архив успешно скопирован в облачное х�
 
 # Удаление старых архивов на сервере
 echo "Удаление локальных архивов старше ${KEEP_DAYS} дней..."
-find ${BACKUP_PATH} -name "n8n-backup-*.tar.gz" -type f -mtime +${KEEP_DAYS} -delete
+find ${BACKUP_PATH} -name "n8n-backup-*.tar.gz*" -type f -mtime +${KEEP_DAYS} -delete
 echo "✅ Старые локальные архивы удалены."
 
 # Проверка успешности загрузки
 echo "Проверка наличия загруженного файла в облачном хранилище..."
-if rclone ls ${REMOTE_PATH}/n8n-backup-${BACKUP_DATE}.tar.gz &> /dev/null; then
+if rclone ls ${REMOTE_PATH}/$(basename ${ARCHIVE_FILE}) &> /dev/null; then
     echo "✅ Файл успешно загружен и доступен в облачном хранилище."
 else
     echo "❌ Файл не найден в облачном хранилище после загрузки!"
@@ -64,10 +89,10 @@ fi
 echo "=============================================="
 echo "Резервное копирование успешно завершено!"
 echo "Дата: ${BACKUP_DATE}"
-echo "Файл: n8n-backup-${BACKUP_DATE}.tar.gz"
+echo "Файл: $(basename ${ARCHIVE_FILE})"
 echo "=============================================="
 
 # Очистка папки backup после завершения
 echo "Очистка папки резервных копий..."
-rm -f ${BACKUP_PATH}/n8n-backup-*.tar.gz
+rm -f ${BACKUP_PATH}/n8n-backup-*.tar.gz*
 echo "✅ Папка резервных копий успешно очищена."
