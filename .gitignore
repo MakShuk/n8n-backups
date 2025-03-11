@@ -1,0 +1,66 @@
+# Backup files
+*.tar.gz
+*.zip
+*.bak
+
+# Log files
+*.log
+logs/
+
+# Configuration files that may contain secrets
+.env
+.env.*
+*.conf
+config.js
+config.json
+
+# Credentials
+.credentials
+credentials/
+credentials.json
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Local backup storage
+/backup/
+
+# Test coverage
+coverage/
+
+# Build files
+dist/
+build/
+out/
+
+# Docker data volumes
+data/

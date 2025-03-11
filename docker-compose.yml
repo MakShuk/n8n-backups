@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  n8n-backup:
+    image: alpine:latest
+    container_name: n8n-backup
+    restart: unless-stopped
+    volumes:
+      - ${N8N_DATA_FOLDER}:/data/n8n  # Монтируем директорию с базой данных
+      - ./backup:/backup  # Директория для временного хранения бэкапов
+      - ./scripts:/scripts  # Директория со скриптами
+      - ./config:/config  # Директория для хранения конфигурации
+    environment:
+      - WEBDAV_URL=${WEBDAV_URL}
+      - WEBDAV_USERNAME=${WEBDAV_USERNAME}
+      - WEBDAV_PASSWORD=${WEBDAV_PASSWORD}
+      - BACKUP_KEEP_DAYS=${BACKUP_KEEP_DAYS}
+    command: sh -c "apk add --no-cache curl rclone bash && chmod +x /scripts/backup.sh && chmod +x /scripts/setup.sh && /scripts/setup.sh && echo 'Running initial backup...' && /scripts/backup.sh && echo 'Initial backup completed at' `date` && while true; do current_hour=`date +%H`; if [ \"$current_hour\" == \"02\" ]; then /scripts/backup.sh && echo 'Backup completed at' `date` && sleep 3600; else sleep 1800; fi; done"
