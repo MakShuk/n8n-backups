@@ -30,6 +30,8 @@ desktop.ini
 *.swp
 *.swo
 *~
+.enc
+.gz
 
 # Node.js dependencies
 node_modules/
